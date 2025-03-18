@@ -9,18 +9,18 @@ const AdminPage: React.FC = () => {
       name: "Save The Ocean Foundation",
       description:
         "Supporting marine life conservation and ocean cleanup initiatives.",
-      accepted: "IDRX",
+      addressPIC: "0x772DEE8eA79F07C3CC88579f9f6Ad5FA6cBf4d5B",
     },
     {
       name: "Global Education Fund",
       description:
         "Providing educational resources to underprivileged communities.",
-      accepted: "IDRX",
+      addressPIC: "0x772DEE8eA79F07C3CC88579f9f6Ad5FA6cBf4d5B",
     },
     {
       name: "Tech for All Initiative",
       description: "Bridging the digital divide through technology access.",
-      accepted: "IDRX",
+      addressPIC: "0x772DEE8eA79F07C3CC88579f9f6Ad5FA6cBf4d5B",
     },
   ]);
 
@@ -56,7 +56,7 @@ const AdminPage: React.FC = () => {
     <div className="min-h-screen flex flex-col bg-gray-100">
       <Navbar />
       <main className="flex-grow p-6">
-        <h1 className="text-2xl font-bold text-center">
+        <h1 className="text-2xl text-red-500 font-bold text-center">
           Admin Panel - Manage Donation Programs
         </h1>
 
@@ -91,12 +91,12 @@ const AdminPage: React.FC = () => {
             name="budget"
             value={newProgram.budget}
             onChange={handleInputChange}
-            placeholder="Address PIC"
+            placeholder="Budget"
             className="w-full p-3 mt-3 border rounded-lg"
           />
           <button
             onClick={addProgram}
-            className="mt-4 bg-blue-600 text-white px-6 py-3 rounded-lg w-full hover:bg-blue-500"
+            className="mt-4 bg-red-600 text-white px-6 py-3 rounded-lg w-full hover:bg-red-500"
           >
             Add Program
           </button>
