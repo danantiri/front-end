@@ -62,6 +62,7 @@ const DonationModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 
 const Home: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  // update state
   const [programs, setPrograms] = useState([
     {
       name: "Save The Ocean Foundation",
