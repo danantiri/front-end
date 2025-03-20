@@ -5,54 +5,60 @@ import StatCard from "../components/StaticCard";
 import Navbar from "../components/Navbar";
 import banner from "../assets/banner.jpg";
 
-const DonationModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
-  isOpen,
-  onClose,
-}) => {
-  const [amount, setAmount] = useState(0);
+const DonationModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  selectedProgram: {
+    name: string;
+    description: string;
+    addressPIC: string;
+    fundRaised: number;
+    fundTarget: number;
+  } | null;
+}> = ({ isOpen, onClose, selectedProgram }) => {
+  if (!isOpen || !selectedProgram) return null;
 
-  const presetAmounts = [10000, 50000, 100000, 500000];
-
-  if (!isOpen) return null;
+  const progressPercentage = Math.min(
+    (selectedProgram.fundRaised / selectedProgram.fundTarget) * 100,
+    100
+  ).toFixed(0);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60">
       <div className="bg-gray-600 text-white p-8 rounded-lg shadow-lg w-[500px]">
-        <h2 className="text-2xl font-bold text-center">Make a Donation</h2>
-        <div className="mt-6">
-          <p className="text-gray-300 text-center">Choose amount:</p>
-          <div className="flex gap-3 mt-4 justify-center">
-            {presetAmounts.map((amt) => (
-              <button
-                key={amt}
-                onClick={() => setAmount(amt)}
-                className={`px-5 py-3 rounded-lg transition ${
-                  amount === amt
-                    ? "bg-blue-600"
-                    : "bg-gray-700 hover:bg-gray-600"
-                }`}
-              >
-                {amt.toLocaleString()} IDRX
-              </button>
-            ))}
-          </div>
-          <input
-            type="number"
-            value={amount}
-            onChange={(e) => setAmount(Number(e.target.value))}
-            className="w-full mt-6 p-3 border border-gray-600 rounded-lg bg-gray-800 text-white text-center"
-            placeholder="Enter custom amount"
-          />
+        <h2 className="text-2xl font-bold text-center">
+          {selectedProgram.name}
+        </h2>
+        <p className="text-gray-300 mt-2 text-center">
+          {selectedProgram.description}
+        </p>
+
+        <div className="mt-4 text-sm text-center text-gray-400">
+          Wallet Address:{" "}
+          <span className="text-gray-200">{selectedProgram.addressPIC}</span>
         </div>
-        <div className="mt-6 flex justify-between">
+
+        {/* Progress Bar */}
+        <div className="mt-6">
+          <p className="text-gray-300 text-sm mb-2">Fund Progress:</p>
+          <div className="w-full bg-gray-800 rounded-full h-6">
+            <div
+              className="bg-red-500 h-6 rounded-full text-center text-xs font-bold text-black flex items-center justify-center"
+              style={{ width: `${progressPercentage}%` }}
+            ></div>
+          </div>
+          <p className="text-gray-400 text-xs mt-2 text-center">
+            {selectedProgram.fundRaised.toLocaleString()} IDRX /{" "}
+            {selectedProgram.fundTarget.toLocaleString()} IDRX
+          </p>
+        </div>
+
+        <div className="mt-6 flex justify-center">
           <button
             className="text-red-700 px-5 py-3 rounded-lg border border-red-500 bg-white"
             onClick={onClose}
           >
-            Cancel
-          </button>
-          <button className="bg-red-600 text-white px-5 py-3 rounded-lg hover:bg-blue-500">
-            Donate {amount.toLocaleString()} IDRX
+            Close
           </button>
         </div>
       </div>
@@ -62,26 +68,51 @@ const DonationModal: React.FC<{ isOpen: boolean; onClose: () => void }> = ({
 
 const Home: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  // update state
-  const [programs, setPrograms] = useState([
+  const [selectedProgram, setSelectedProgram] = useState<{
+    name: string;
+    description: string;
+    addressPIC: string;
+    fundRaised: number;
+    fundTarget: number;
+  } | null>(null);
+
+  const programs = [
     {
       name: "Save The Ocean Foundation",
       description:
         "Supporting marine life conservation and ocean cleanup initiatives.",
       addressPIC: "0x772DEE8eA79F07C3CC88579f9f6Ad5FA6cBf4d5B",
+      fundRaised: 0,
+      fundTarget: 10000,
     },
     {
       name: "Global Education Fund",
       description:
         "Providing educational resources to underprivileged communities.",
       addressPIC: "0x772DEE8eA79F07C3CC88579f9f6Ad5FA6cBf4d5B",
+      fundRaised: 5000,
+      fundTarget: 10000,
     },
     {
       name: "Tech for All Initiative",
       description: "Bridging the digital divide through technology access.",
       addressPIC: "0x772DEE8eA79F07C3CC88579f9f6Ad5FA6cBf4d5B",
+      fundRaised: 0,
+      fundTarget: 10000,
     },
-  ]);
+  ];
+
+  // Handler untuk menampilkan modal dengan program yang dipilih
+  const handleOpenModal = (program: {
+    name: string;
+    description: string;
+    addressPIC: string;
+    fundRaised: number;
+    fundTarget: number;
+  }) => {
+    setSelectedProgram(program);
+    setIsModalOpen(true);
+  };
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
@@ -95,15 +126,9 @@ const Home: React.FC = () => {
           Support Meaningful Projects with Crypto
         </h1>
         <p className="text-gray-600 mt-2 max-w-lg">
-          Your allocate fund will be pooled and distributed to impactful
-          programs
+          Your allocated fund will be pooled and distributed to impactful
+          programs.
         </p>
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="mt-4 bg-red-600 text-white px-6 py-3 rounded-lg text-lg"
-        >
-          Support Now
-        </button>
       </main>
       <section
         className="flex flex-wrap justify-center gap-6 p-6 bg-white shadow-md"
@@ -119,7 +144,11 @@ const Home: React.FC = () => {
         <h2 className="text-2xl text-red-500 font-bold">Featured Programs</h2>
         <div className="flex justify-center gap-6 mt-6 flex-wrap">
           {programs.map((program, index) => (
-            <ProgramCard key={index} {...program} />
+            <ProgramCard
+              key={index}
+              {...program}
+              onClick={() => handleOpenModal(program)} // Tambahkan handler klik
+            />
           ))}
         </div>
       </section>
@@ -127,7 +156,9 @@ const Home: React.FC = () => {
       <DonationModal
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
+        selectedProgram={selectedProgram}
       />
+
       <Footer />
     </div>
   );
