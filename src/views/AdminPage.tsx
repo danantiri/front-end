@@ -159,7 +159,15 @@ const AdminPage: React.FC = () => {
       {/* Modal Dialog untuk Alokasi Dana */}
       {isModalOpen && selectedProgram && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60">
-          <div className="bg-gray-600 text-white p-8 rounded-lg shadow-lg w-[500px]">
+          <div className="relative bg-gray-600 text-white p-8 rounded-lg shadow-lg w-[500px]">
+            {/* Tombol Close */}
+            <button
+              className="absolute top-2 right-2 text-white text-2xl hover:text-gray-300"
+              onClick={() => setIsModalOpen(false)}
+            >
+              ✖
+            </button>
+
             <h2 className="text-2xl font-bold text-center">
               {selectedProgram.name}
             </h2>
@@ -168,15 +176,24 @@ const AdminPage: React.FC = () => {
             </p>
 
             <div className="mt-4 text-sm text-center text-gray-400">
-              Wallet Address:{" "}
+              PIC Address:{" "}
               <span className="text-gray-200">
                 {selectedProgram.addressPIC}
               </span>
             </div>
 
+            <div>
+              <button
+                onClick={allocateFund}
+                className="bg-red-500 w-full mt-4 text-white px-5 py-3 rounded-lg hover:bg-red-600"
+              >
+                Allocate
+              </button>
+            </div>
+
             {/* Progress Bar */}
             <div className="mt-6">
-              <p className="text-gray-300 text-sm mb-2">Fund Progress:</p>
+              <p className="text-gray-300 text-sm mb-2">Remaining Fund:</p>
               <div className="w-full bg-gray-800 rounded-full h-6">
                 <div
                   className="bg-red-500 h-6 rounded-full text-center text-xs font-bold text-black flex items-center justify-center"
@@ -197,13 +214,37 @@ const AdminPage: React.FC = () => {
 
             {selectedProgram.fundRaised > 0 ? (
               <>
+                <input
+                  type="number"
+                  value={allocationAmount}
+                  onChange={(e) => setAllocationAmount(e.target.value)}
+                  className="w-full mt-4 p-3 border border-gray-600 rounded-lg bg-gray-800 text-white text-center"
+                  placeholder="Enter amount"
+                />
+                <input
+                  type="text"
+                  value={allocationAmount}
+                  onChange={(e) => setAllocationAmount(e.target.value)}
+                  className="w-full mt-4 p-3 border border-gray-600 rounded-lg bg-gray-800 text-white text-center"
+                  placeholder="Note"
+                />
+
+                <div className="mt-6 flex justify-end">
+                  <button
+                    onClick={allocateFund}
+                    className="bg-green-600 text-white px-5 py-3 rounded-lg hover:bg-blue-500"
+                  >
+                    Withdraw
+                  </button>
+                </div>
                 <div className="mt-6">
-                  <h3 className="text-lg font-semibold">Transaction History</h3>
+                  <h3 className="text-lg font-semibold">Withdraw History</h3>
                   <table className="w-full text-left border border-gray-500 mt-3">
                     <thead>
                       <tr>
-                        <th className="border px-4 py-2">No</th>
-                        <th className="border px-4 py-2">Nominal</th>
+                        <th className="border px-4 py-2">Date</th>
+                        <th className="border px-4 py-2">Amount</th>
+                        <th className="border px-4 py-2">Note</th>
                       </tr>
                     </thead>
                     {selectedProgram.transactions ? (
@@ -211,8 +252,13 @@ const AdminPage: React.FC = () => {
                         {selectedProgram.transactions.map(
                           (tx: any, idx: number) => (
                             <tr key={idx}>
-                              <td className="border px-4 py-2">{tx.id}</td>
                               <td className="border px-4 py-2">{tx.amount}</td>
+                              <td className="border px-4 py-2">
+                                {tx?.date || ""}
+                              </td>
+                              <td className="border px-4 py-2">
+                                {tx?.note || ""}
+                              </td>
                             </tr>
                           )
                         )}
@@ -230,34 +276,6 @@ const AdminPage: React.FC = () => {
                       </tbody>
                     )}
                   </table>
-                </div>
-                <input
-                  type="number"
-                  value={allocationAmount}
-                  onChange={(e) => setAllocationAmount(e.target.value)}
-                  className="w-full mt-4 p-3 border border-gray-600 rounded-lg bg-gray-800 text-white text-center"
-                  placeholder="Enter amount"
-                />
-
-                <div className="mt-6 flex justify-between">
-                  <button
-                    className="text-red-700 px-5 py-3 rounded-lg border border-red-500 bg-white"
-                    onClick={() => setIsModalOpen(false)}
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={allocateFund}
-                    className="bg-green-600 text-white px-5 py-3 rounded-lg hover:bg-blue-500"
-                  >
-                    Withdraw
-                  </button>
-                  <button
-                    onClick={allocateFund}
-                    className="bg-red-500 text-white px-5 py-3 rounded-lg hover:bg-blue-500"
-                  >
-                    Allocate
-                  </button>
                 </div>
               </>
             ) : (

@@ -5,14 +5,14 @@ const Footer: React.FC = () => {
     <footer className="bg-red-600 text-white py-8 px-6">
       <div className="max-w-6xl mx-auto flex flex-wrap justify-between">
         <div>
-          <h3 className="text-xl font-bold">Danatiri</h3>
+          <h3 className="text-xl font-bold">Danantiri</h3>
           <p className="text-white-400 mt-2">
-            Making charitable giving accessible through cryptocurrency
+            Blockchain-Based Government Fund Tracking
           </p>
         </div>
         <div>
           <h4 className="font-bold">Supported Cryptocurrencies</h4>
-          <p className="text-white-400 mt-2">💎 IDRX</p>
+          <p className="text-white-400 mt-2">💎 IDRX (Lisk Sepolia Testnet)</p>
         </div>
         <div>
           <h4 className="font-bold">Connect With Us</h4>
@@ -20,7 +20,7 @@ const Footer: React.FC = () => {
         </div>
       </div>
       <div className="text-center text-white-500 text-sm mt-6 border-t border-white-700 pt-4">
-        © 2025 Danatiri. All rights reserved.
+        © 2025 Danantiri. All rights reserved.
       </div>
     </footer>
   );

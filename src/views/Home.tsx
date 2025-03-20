@@ -3,7 +3,8 @@ import Footer from "../components/Footer";
 import ProgramCard from "../components/ProgramCard";
 import StatCard from "../components/StaticCard";
 import Navbar from "../components/Navbar";
-import banner from "../assets/banner.jpg";
+import banner from "../assets/tiri.png";
+import ContributeModal from "../components/ContributeModal";
 
 const DonationModal: React.FC<{
   isOpen: boolean;
@@ -14,6 +15,7 @@ const DonationModal: React.FC<{
     addressPIC: string;
     fundRaised: number;
     fundTarget: number;
+    transactions: any[];
   } | null;
 }> = ({ isOpen, onClose, selectedProgram }) => {
   if (!isOpen || !selectedProgram) return null;
@@ -25,7 +27,15 @@ const DonationModal: React.FC<{
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60">
-      <div className="bg-gray-600 text-white p-8 rounded-lg shadow-lg w-[500px]">
+      <div className="relative bg-gray-600 text-white p-8 rounded-lg shadow-lg w-[500px]">
+        {/* Tombol Close */}
+        <button
+          className="absolute top-3 right-3 text-white text-2xl hover:text-gray-300"
+          onClick={() => onClose()}
+        >
+          ✖
+        </button>
+
         <h2 className="text-2xl font-bold text-center">
           {selectedProgram.name}
         </h2>
@@ -34,13 +44,13 @@ const DonationModal: React.FC<{
         </p>
 
         <div className="mt-4 text-sm text-center text-gray-400">
-          Wallet Address:{" "}
+          PIC Address:{" "}
           <span className="text-gray-200">{selectedProgram.addressPIC}</span>
         </div>
 
         {/* Progress Bar */}
         <div className="mt-6">
-          <p className="text-gray-300 text-sm mb-2">Fund Progress:</p>
+          <p className="text-gray-300 text-sm mb-2">Remaining Fund:</p>
           <div className="w-full bg-gray-800 rounded-full h-6">
             <div
               className="bg-red-500 h-6 rounded-full text-center text-xs font-bold text-black flex items-center justify-center"
@@ -53,13 +63,36 @@ const DonationModal: React.FC<{
           </p>
         </div>
 
-        <div className="mt-6 flex justify-center">
-          <button
-            className="text-red-700 px-5 py-3 rounded-lg border border-red-500 bg-white"
-            onClick={onClose}
-          >
-            Close
-          </button>
+        <div className="mt-6">
+          <h3 className="text-lg font-semibold">Withdraw History</h3>
+          <table className="w-full text-left border border-gray-500 mt-3">
+            <thead>
+              <tr>
+                <th className="border px-4 py-2">Date</th>
+                <th className="border px-4 py-2">Amount</th>
+                <th className="border px-4 py-2">Note</th>
+              </tr>
+            </thead>
+            {selectedProgram.transactions.length > 0 ? (
+              <tbody>
+                {selectedProgram.transactions.map((tx: any, idx: number) => (
+                  <tr key={idx}>
+                    <td className="border px-4 py-2">{tx.amount}</td>
+                    <td className="border px-4 py-2">{tx?.date || ""}</td>
+                    <td className="border px-4 py-2">{tx?.note || ""}</td>
+                  </tr>
+                ))}
+              </tbody>
+            ) : (
+              <tbody>
+                <tr>
+                  <td className="border text-center px-4 py-2" colSpan={3}>
+                    No transactions available
+                  </td>
+                </tr>
+              </tbody>
+            )}
+          </table>
         </div>
       </div>
     </div>
@@ -74,7 +107,10 @@ const Home: React.FC = () => {
     addressPIC: string;
     fundRaised: number;
     fundTarget: number;
+    transactions: any[];
   } | null>(null);
+
+  const [isContributeModalOpen, setIsContributeModalOpen] = useState(false);
 
   const programs = [
     {
@@ -84,6 +120,7 @@ const Home: React.FC = () => {
       addressPIC: "0x772DEE8eA79F07C3CC88579f9f6Ad5FA6cBf4d5B",
       fundRaised: 0,
       fundTarget: 10000,
+      transactions: [],
     },
     {
       name: "Global Education Fund",
@@ -92,6 +129,7 @@ const Home: React.FC = () => {
       addressPIC: "0x772DEE8eA79F07C3CC88579f9f6Ad5FA6cBf4d5B",
       fundRaised: 5000,
       fundTarget: 10000,
+      transactions: [],
     },
     {
       name: "Tech for All Initiative",
@@ -99,6 +137,7 @@ const Home: React.FC = () => {
       addressPIC: "0x772DEE8eA79F07C3CC88579f9f6Ad5FA6cBf4d5B",
       fundRaised: 0,
       fundTarget: 10000,
+      transactions: [],
     },
   ];
 
@@ -109,19 +148,32 @@ const Home: React.FC = () => {
     addressPIC: string;
     fundRaised: number;
     fundTarget: number;
+    transactions: any[];
   }) => {
     setSelectedProgram(program);
     setIsModalOpen(true);
   };
 
+  // Fungsi untuk Approve IDRX
+  const handleApprove = (amount: number) => {
+    console.log("Approving IDRX:", amount);
+    alert(`Approved ${amount} IDRX`);
+  };
+
+  // Fungsi untuk Contribute
+  const handleContribute = (amount: number) => {
+    console.log("Contributing:", amount);
+    alert(`Contributed ${amount} IDRX`);
+  };
+
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
       <Navbar />
-      <img src={banner} className="w-full h-[800px] bg-cover" />
       <main
-        className="flex flex-col items-center justify-center flex-grow text-center"
+        className="flex flex-col items-center justify-center p-8 flex-grow text-center"
         style={{ minHeight: "400px" }}
       >
+        <img src={banner} className=" h-[300px] w-fit" />
         <h1 className="text-3xl font-bold text-red-600">
           Support Meaningful Projects with Crypto
         </h1>
@@ -129,6 +181,14 @@ const Home: React.FC = () => {
           Your allocated fund will be pooled and distributed to impactful
           programs.
         </p>
+        <div>
+          <button
+            className="mt-4 bg-red-600 text-white px-6 py-3 rounded-lg w-full hover:bg-red-500"
+            onClick={() => setIsContributeModalOpen(true)}
+          >
+            Contribute
+          </button>
+        </div>
       </main>
       <section
         className="flex flex-wrap justify-center gap-6 p-6 bg-white shadow-md"
@@ -157,6 +217,13 @@ const Home: React.FC = () => {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         selectedProgram={selectedProgram}
+      />
+
+      <ContributeModal
+        isOpen={isContributeModalOpen}
+        onClose={() => setIsContributeModalOpen(false)}
+        onApprove={handleApprove}
+        onContribute={handleContribute}
       />
 
       <Footer />
