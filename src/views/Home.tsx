@@ -45,7 +45,15 @@ const DonationModal: React.FC<{
 
         <div className="mt-4 text-sm text-center text-gray-400">
           PIC Address:{" "}
-          <span className="text-gray-200">{selectedProgram.addressPIC}</span>
+          <span className="text-gray-200">
+            <a
+              href={`https://sepolia-blockscout.lisk.com/address/${selectedProgram.addressPIC}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {selectedProgram.addressPIC}
+            </a>
+          </span>
         </div>
 
         {/* Progress Bar */}
