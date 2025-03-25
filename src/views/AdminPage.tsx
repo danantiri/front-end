@@ -2,33 +2,10 @@ import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ProgramCard from "../components/ProgramCard";
+import { useProgramStore } from "../store/programStore";
 
 const AdminPage: React.FC = () => {
-  const [programs, setPrograms] = useState([
-    {
-      name: "Save The Ocean Foundation",
-      description:
-        "Supporting marine life conservation and ocean cleanup initiatives.",
-      addressPIC: "0x772DEE8eA79F07C3CC88579f9f6Ad5FA6cBf4d5B",
-      fundRaised: 50000,
-      fundTarget: 100000,
-    },
-    {
-      name: "Global Education Fund",
-      description:
-        "Providing educational resources to underprivileged communities.",
-      addressPIC: "0x772DEE8eA79F07C3CC88579f9f6Ad5FA6cBf4d5B",
-      fundRaised: 20000,
-      fundTarget: 50000,
-    },
-    {
-      name: "Tech for All Initiative",
-      description: "Bridging the digital divide through technology access.",
-      addressPIC: "0x772DEE8eA79F07C3CC88579f9f6Ad5FA6cBf4d5B",
-      fundRaised: 0,
-      fundTarget: 100000,
-    },
-  ]);
+  const { programs, addProgram, updateFund } = useProgramStore();
 
   const [newProgram, setNewProgram] = useState({
     name: "",
@@ -48,16 +25,16 @@ const AdminPage: React.FC = () => {
     setNewProgram((prev) => ({ ...prev, [name]: value }));
   };
 
-  const addProgram = () => {
-    if (newProgram.name && newProgram.description) {
-      setPrograms([
-        ...programs,
-        {
-          ...newProgram,
-          fundRaised: 0,
-          fundTarget: parseInt(newProgram.budget),
-        },
-      ]);
+  const addProgramHandler = () => {
+    if (newProgram.name && newProgram.description && newProgram.budget) {
+      addProgram({
+        name: newProgram.name,
+        description: newProgram.description,
+        addressPIC: newProgram.addressPIC,
+        fundRaised: 0,
+        fundTarget: parseInt(newProgram.budget),
+        transactions: [],
+      });
       setNewProgram({
         name: "",
         description: "",
@@ -76,15 +53,10 @@ const AdminPage: React.FC = () => {
   const allocateFund = () => {
     if (!selectedProgram || !allocationAmount) return;
 
-    setPrograms((prevPrograms) =>
-      prevPrograms.map((program) =>
-        program.name === selectedProgram.name
-          ? {
-              ...program,
-              fundRaised: program.fundRaised + parseInt(allocationAmount),
-            }
-          : program
-      )
+    updateFund(
+      selectedProgram.name,
+      parseInt(allocationAmount),
+      "Admin allocation"
     );
 
     setIsModalOpen(false);
@@ -95,7 +67,7 @@ const AdminPage: React.FC = () => {
       <Navbar />
       <main className="flex-grow p-6">
         <h1 className="text-2xl text-red-500 font-bold text-center">
-          Admin Panel - Manage Donation Programs
+          Admin Panel - Fund Programs Management
         </h1>
 
         {/* Form untuk Menambahkan Program */}
@@ -133,26 +105,32 @@ const AdminPage: React.FC = () => {
             className="w-full p-3 mt-3 border rounded-lg"
           />
           <button
-            onClick={addProgram}
+            onClick={addProgramHandler}
             className="mt-4 bg-red-600 text-white px-6 py-3 rounded-lg w-full hover:bg-red-500"
           >
             Add Program
           </button>
         </div>
 
-        {/* List Program yang Ada */}
+        {/* Featured Organizations */}
         <section className="text-center py-12">
-          <h2 className="text-2xl font-bold">Current Programs</h2>
-          <div className="flex justify-center gap-6 mt-6 flex-wrap">
-            {programs.map((program, index) => (
-              <div key={index} className="relative">
+          <h2 className="text-2xl text-red-500 font-bold">Current Programs</h2>
+
+          {programs.length === 0 ? (
+            <p className="mt-6 text-gray-500">
+              No programs available at the moment.
+            </p>
+          ) : (
+            <div className="flex justify-center gap-6 mt-6 flex-wrap">
+              {programs.map((program: any, index) => (
                 <ProgramCard
+                  key={index}
                   {...program}
                   onClick={() => openAllocateModal(program)}
                 />
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </section>
       </main>
 

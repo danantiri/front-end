@@ -5,6 +5,7 @@ import StatCard from "../components/StaticCard";
 import Navbar from "../components/Navbar";
 import banner from "../assets/tiri.png";
 import ContributeModal from "../components/ContributeModal";
+import { useProgramStore } from "../store/programStore";
 
 const DonationModal: React.FC<{
   isOpen: boolean;
@@ -117,37 +118,8 @@ const Home: React.FC = () => {
     fundTarget: number;
     transactions: any[];
   } | null>(null);
-
+  const { programs } = useProgramStore();
   const [isContributeModalOpen, setIsContributeModalOpen] = useState(false);
-
-  const programs = [
-    {
-      name: "Save The Ocean Foundation",
-      description:
-        "Supporting marine life conservation and ocean cleanup initiatives.",
-      addressPIC: "0x772DEE8eA79F07C3CC88579f9f6Ad5FA6cBf4d5B",
-      fundRaised: 0,
-      fundTarget: 10000,
-      transactions: [],
-    },
-    {
-      name: "Global Education Fund",
-      description:
-        "Providing educational resources to underprivileged communities.",
-      addressPIC: "0x772DEE8eA79F07C3CC88579f9f6Ad5FA6cBf4d5B",
-      fundRaised: 5000,
-      fundTarget: 10000,
-      transactions: [],
-    },
-    {
-      name: "Tech for All Initiative",
-      description: "Bridging the digital divide through technology access.",
-      addressPIC: "0x772DEE8eA79F07C3CC88579f9f6Ad5FA6cBf4d5B",
-      fundRaised: 0,
-      fundTarget: 10000,
-      transactions: [],
-    },
-  ];
 
   // Handler untuk menampilkan modal dengan program yang dipilih
   const handleOpenModal = (program: {
@@ -203,22 +175,28 @@ const Home: React.FC = () => {
         style={{ minHeight: "200px" }}
       >
         <StatCard title="Total Pool Balance" value="12.5 IDRX" />
-        <StatCard title="Total Support" value="156" />
         <StatCard title="Programs Funded" value="8" />
       </section>
 
       {/* Featured Organizations */}
       <section className="text-center py-12">
         <h2 className="text-2xl text-red-500 font-bold">Featured Programs</h2>
-        <div className="flex justify-center gap-6 mt-6 flex-wrap">
-          {programs.map((program, index) => (
-            <ProgramCard
-              key={index}
-              {...program}
-              onClick={() => handleOpenModal(program)} // Tambahkan handler klik
-            />
-          ))}
-        </div>
+
+        {programs.length === 0 ? (
+          <p className="mt-6 text-gray-500">
+            No programs available at the moment.
+          </p>
+        ) : (
+          <div className="flex justify-center gap-6 mt-6 flex-wrap">
+            {programs.map((program: any, index) => (
+              <ProgramCard
+                key={index}
+                {...program}
+                onClick={() => handleOpenModal(program)}
+              />
+            ))}
+          </div>
+        )}
       </section>
 
       <DonationModal
