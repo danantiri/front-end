@@ -1,54 +1,33 @@
-# React + TypeScript + Vite
+# Crypto Donation Platform
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Platform donasi berbasis crypto yang memungkinkan pengguna untuk:
 
-Currently, two official plugins are available:
+- Melihat berbagai program donasi.
+- Memberikan kontribusi dalam bentuk IDRX.
+- Melihat progres pendanaan dan riwayat withdraw.
+- Admin dapat menambahkan program dan mengelola alokasi dana.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Fitur Utama
 
-## Expanding the ESLint configuration
+### Untuk Umum (User)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+- Melihat banner dan informasi campaign.
+- Melihat statistik total dana dan jumlah program.
+- Melihat program yang tersedia dan detailnya.
+- Memberikan kontribusi (modal kontribusi).
+- Lihat riwayat penggunaan dana pada program.
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+### Untuk Admin
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+- Tambah program baru.
+- Alokasi dana (withdraw) dari program.
+- Lihat progres dan riwayat transaksi per program.
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+## 🛠️ Teknologi yang Digunakan
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+- **React** (CRA)
+- **TypeScript**
+- **Tailwind CSS**
+- **Zustand** (State Management)
+- **Ether.js** (opsional, jika nanti ingin integrasi blockchain)
+- **Blockscout** (untuk menampilkan alamat PIC di explorer)
