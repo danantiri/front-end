@@ -1,10 +1,13 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ProgramCard from "../components/ProgramCard";
 import { useProgramStore } from "../store/programStore";
 
 const AdminPage: React.FC = () => {
+  const checkAdmin = () => {
+    // login to validate admin
+  };
   const { programs, addProgram, updateFund } = useProgramStore();
 
   const [newProgram, setNewProgram] = useState({
@@ -26,6 +29,7 @@ const AdminPage: React.FC = () => {
   };
 
   const addProgramHandler = () => {
+    // add program to smartcontract
     if (newProgram.name && newProgram.description && newProgram.budget) {
       addProgram({
         name: newProgram.name,
@@ -51,6 +55,7 @@ const AdminPage: React.FC = () => {
   };
 
   const allocateFund = () => {
+    // insert logic to allocationFund to smart contract
     if (!selectedProgram || !allocationAmount) return;
 
     updateFund(
@@ -61,6 +66,23 @@ const AdminPage: React.FC = () => {
 
     setIsModalOpen(false);
   };
+
+  const whitdrawFund = () => {
+    // insert logic to whitdraw fund from smart contract
+    if (!selectedProgram || !allocationAmount) return;
+
+    updateFund(
+      selectedProgram.name,
+      parseInt(allocationAmount),
+      "Admin allocation"
+    );
+
+    setIsModalOpen(false);
+  };
+
+  useEffect(() => {
+    checkAdmin();
+  }, []);
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
@@ -209,7 +231,7 @@ const AdminPage: React.FC = () => {
 
                 <div className="mt-6 flex justify-end">
                   <button
-                    onClick={allocateFund}
+                    onClick={whitdrawFund}
                     className="bg-green-600 text-white px-5 py-3 rounded-lg hover:bg-blue-500"
                   >
                     Withdraw

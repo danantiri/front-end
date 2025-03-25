@@ -134,14 +134,14 @@ const Home: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  // Fungsi untuk Approve IDRX
   const handleApprove = (amount: number) => {
+    // Fungsi untuk Approve IDRX
     console.log("Approving IDRX:", amount);
     alert(`Approved ${amount} IDRX`);
   };
 
-  // Fungsi untuk Contribute
   const handleContribute = (amount: number) => {
+    // Fungsi untuk send Contribute
     console.log("Contributing:", amount);
     alert(`Contributed ${amount} IDRX`);
   };
@@ -174,8 +174,8 @@ const Home: React.FC = () => {
         className="flex flex-wrap justify-center gap-6 p-6 bg-white shadow-md"
         style={{ minHeight: "200px" }}
       >
-        <StatCard title="Total Pool Balance" value="12.5 IDRX" />
-        <StatCard title="Programs Funded" value="8" />
+        <StatCard title="Managed Fund Amount" value="12.5 IDRX" />
+        <StatCard title="Programs Funded" value={`${programs.length}` || "0"} />
       </section>
 
       {/* Featured Organizations */}
