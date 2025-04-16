@@ -25,9 +25,16 @@ Platform donasi berbasis crypto yang memungkinkan pengguna untuk:
 
 ## 🛠️ Teknologi yang Digunakan
 
-- **React** (CRA)
+- **React** (Vite)
 - **TypeScript**
 - **Tailwind CSS**
 - **Zustand** (State Management)
 - **Ether.js** (opsional, jika nanti ingin integrasi blockchain)
 - **Blockscout** (untuk menampilkan alamat PIC di explorer)
+
+# Instalation and Running React
+
+- git clone repo. "https://github.com/danantiri/front-end"
+- go to folder "cd front-end"
+- install dependencies "npm install"
+- run react "npm run dev"
