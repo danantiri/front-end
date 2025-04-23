@@ -21,7 +21,7 @@ const DonationModal: React.FC<{
 }> = ({ isOpen, onClose, selectedProgram }) => {
   const { data: programHistories } = useReadContract({
     abi: danantiriABI,
-    address: IDRX_SEPOLIA,
+    address: DANANTIRI_ADDRESS,
     functionName: "getProgramHistory",
     args: [BigInt(selectedProgram?.id ?? 0)],
     query: {
