@@ -178,7 +178,7 @@ const Home: React.FC = () => {
 
     const hash = await writeContractAsync({
       abi: danantiriABI,
-      address: IDRX_SEPOLIA,
+      address: DANANTIRI_ADDRESS,
       functionName: "sendFund",
       args: [BigInt(parsedAmount)],
     });
