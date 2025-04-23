@@ -8,7 +8,7 @@ import ContributeModal from "../components/ContributeModal";
 import { Program } from "../store/programStore";
 import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import { danantiriABI } from "../utils/abi";
-import { erc20Abi, formatUnits, parseUnits } from "viem";
+import { Address, erc20Abi, formatUnits, parseUnits } from "viem";
 import { DANANTIRI_ADDRESS, IDRX_SEPOLIA } from "../constants";
 import { waitForTransactionReceipt } from "wagmi/actions";
 import { config } from "../provider";
@@ -117,6 +117,24 @@ const Home: React.FC = () => {
 
   const { address } = useAccount();
 
+  const { data: allowance } = useReadContract({
+    abi: erc20Abi,
+    address: IDRX_SEPOLIA,
+    functionName: "allowance",
+    args: [address as Address, DANANTIRI_ADDRESS],
+  });
+
+  console.log({ allowance });
+
+  const { data: idrxToken } = useReadContract({
+    abi: danantiriABI,
+    address: DANANTIRI_ADDRESS,
+    functionName: "idrxToken",
+    args: [],
+  });
+
+  console.log({ idrxToken });
+
   // Mengambil semua program
   const { data: allPrograms } = useReadContract({
     abi: danantiriABI,
@@ -161,7 +179,7 @@ const Home: React.FC = () => {
       abi: erc20Abi,
       address: IDRX_SEPOLIA,
       functionName: "approve",
-      args: [address, BigInt(parsedAmount)],
+      args: [DANANTIRI_ADDRESS, BigInt(parsedAmount)],
     });
 
     await waitForTransactionReceipt(config, {
@@ -175,6 +193,8 @@ const Home: React.FC = () => {
   // Fungsi untuk send Contribute
   const handleContribute = async (amount: number) => {
     const parsedAmount = parseUnits(amount.toString(), 2);
+
+    console.log({ parsedAmount });
 
     const hash = await writeContractAsync({
       abi: danantiriABI,
