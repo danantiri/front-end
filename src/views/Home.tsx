@@ -5,44 +5,47 @@ import StatCard from "../components/StaticCard";
 import Navbar from "../components/Navbar";
 import banner from "../assets/tiri.png";
 import ContributeModal from "../components/ContributeModal";
-import { useProgramStore } from "../store/programStore";
+import { Program } from "../store/programStore";
+import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { danantiriABI } from "../utils/abi";
+import { erc20Abi, formatUnits, parseUnits } from "viem";
+import { DANANTIRI_ADDRESS, IDRX_SEPOLIA } from "../constants";
+import { waitForTransactionReceipt } from "wagmi/actions";
+import { config } from "../provider";
+import { liskSepolia } from "viem/chains";
 
 const DonationModal: React.FC<{
   isOpen: boolean;
   onClose: () => void;
-  selectedProgram: {
-    name: string;
-    description: string;
-    addressPIC: string;
-    fundRaised: number;
-    fundTarget: number;
-    transactions: any[];
-  } | null;
+  selectedProgram: Program | null;
 }> = ({ isOpen, onClose, selectedProgram }) => {
+  const { data: programHistories } = useReadContract({
+    abi: danantiriABI,
+    address: IDRX_SEPOLIA,
+    functionName: "getProgramHistory",
+    args: [BigInt(selectedProgram?.id ?? 0)],
+    query: {
+      enabled: !!selectedProgram,
+    },
+  });
+
   if (!isOpen || !selectedProgram) return null;
 
-  const progressPercentage = Math.min(
-    (selectedProgram.fundRaised / selectedProgram.fundTarget) * 100,
-    100
-  ).toFixed(0);
+  const fundRaised = formatUnits(BigInt(selectedProgram.fundRaised), 2);
+  const fundTarget = formatUnits(BigInt(selectedProgram.fundTarget), 2);
+
+  const progressPercentage = Math.min((Number(fundRaised) / Number(fundTarget)) * 100, 100).toFixed(0);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60">
       <div className="relative bg-gray-600 text-white p-8 rounded-lg shadow-lg w-[500px]">
         {/* Tombol Close */}
-        <button
-          className="absolute top-3 right-3 text-white text-2xl hover:text-gray-300"
-          onClick={() => onClose()}
-        >
+        <button className="absolute top-3 right-3 text-white text-2xl hover:text-gray-300" onClick={() => onClose()}>
           ✖
         </button>
 
-        <h2 className="text-2xl font-bold text-center">
-          {selectedProgram.name}
-        </h2>
-        <p className="text-gray-300 mt-2 text-center">
-          {selectedProgram.description}
-        </p>
+        <h2 className="text-2xl font-bold text-center">{selectedProgram.name}</h2>
+        <p className="text-gray-300 mt-2 text-center">{selectedProgram.description}</p>
 
         <div className="mt-4 text-sm text-center text-gray-400">
           PIC Address:{" "}
@@ -67,8 +70,7 @@ const DonationModal: React.FC<{
             ></div>
           </div>
           <p className="text-gray-400 text-xs mt-2 text-center">
-            {selectedProgram.fundRaised.toLocaleString()} IDRX /{" "}
-            {selectedProgram.fundTarget.toLocaleString()} IDRX
+            {selectedProgram.fundRaised.toLocaleString()} IDRX / {selectedProgram.fundTarget.toLocaleString()} IDRX
           </p>
         </div>
 
@@ -82,13 +84,13 @@ const DonationModal: React.FC<{
                 <th className="border px-4 py-2">Note</th>
               </tr>
             </thead>
-            {selectedProgram.transactions.length > 0 ? (
+            {(programHistories?.length ?? 0) > 0 ? (
               <tbody>
-                {selectedProgram.transactions.map((tx: any, idx: number) => (
+                {programHistories?.map((tx, idx: number) => (
                   <tr key={idx}>
-                    <td className="border px-4 py-2">{tx.amount}</td>
-                    <td className="border px-4 py-2">{tx?.date || ""}</td>
-                    <td className="border px-4 py-2">{tx?.note || ""}</td>
+                    <td className="border px-4 py-2">{formatUnits(tx.amount, 2)}</td>
+                    <td className="border px-4 py-2">{new Date(Number(tx.timestamp) * 1000).toLocaleString()}</td>
+                    <td className="border px-4 py-2">{tx.history}</td>
                   </tr>
                 ))}
               </tbody>
@@ -110,39 +112,82 @@ const DonationModal: React.FC<{
 
 const Home: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedProgram, setSelectedProgram] = useState<{
-    name: string;
-    description: string;
-    addressPIC: string;
-    fundRaised: number;
-    fundTarget: number;
-    transactions: any[];
-  } | null>(null);
-  const { programs } = useProgramStore();
+  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [isContributeModalOpen, setIsContributeModalOpen] = useState(false);
 
+  const { address } = useAccount();
+
+  // Mengambil semua program
+  const { data: allPrograms } = useReadContract({
+    abi: danantiriABI,
+    address: DANANTIRI_ADDRESS,
+    functionName: "getAllProgram",
+  });
+
+  // Mengambil Managed Fund Amount
+  const { data: managedFundAmount } = useReadContract({
+    abi: danantiriABI,
+    address: DANANTIRI_ADDRESS,
+    functionName: "totalManagedFund",
+  });
+
+  const formattedManagedFundAmount = formatUnits(managedFundAmount ?? BigInt(0), 2);
+
   // Handler untuk menampilkan modal dengan program yang dipilih
-  const handleOpenModal = (program: {
-    name: string;
-    description: string;
-    addressPIC: string;
-    fundRaised: number;
-    fundTarget: number;
-    transactions: any[];
-  }) => {
+  const handleOpenModal = (program: Program) => {
     setSelectedProgram(program);
     setIsModalOpen(true);
   };
 
-  const handleApprove = (amount: number) => {
-    // Fungsi untuk Approve IDRX
-    console.log("Approving IDRX:", amount);
+  // Fungsi untuk Approve IDRX
+  const { writeContractAsync, isPending } = useWriteContract();
+
+  const handleApprove = async (amount: number) => {
+    if (isPending) {
+      return;
+    }
+    if (!address) {
+      alert("Please connect your wallet");
+      return;
+    }
+    if (amount <= 0) {
+      alert("Amount must be greater than 0");
+      return;
+    }
+
+    const parsedAmount = parseUnits(amount.toString(), 2);
+
+    const hash = await writeContractAsync({
+      abi: erc20Abi,
+      address: IDRX_SEPOLIA,
+      functionName: "approve",
+      args: [address, BigInt(parsedAmount)],
+    });
+
+    await waitForTransactionReceipt(config, {
+      hash,
+      chainId: liskSepolia.id,
+    });
+
     alert(`Approved ${amount} IDRX`);
   };
 
-  const handleContribute = (amount: number) => {
-    // Fungsi untuk send Contribute
-    console.log("Contributing:", amount);
+  // Fungsi untuk send Contribute
+  const handleContribute = async (amount: number) => {
+    const parsedAmount = parseUnits(amount.toString(), 2);
+
+    const hash = await writeContractAsync({
+      abi: danantiriABI,
+      address: IDRX_SEPOLIA,
+      functionName: "sendFund",
+      args: [BigInt(parsedAmount)],
+    });
+
+    await waitForTransactionReceipt(config, {
+      hash,
+      chainId: liskSepolia.id,
+    });
+
     alert(`Contributed ${amount} IDRX`);
   };
 
@@ -153,13 +198,10 @@ const Home: React.FC = () => {
         className="flex flex-col items-center justify-center p-8 flex-grow text-center"
         style={{ minHeight: "400px" }}
       >
-        <img src={banner} className=" h-[300px] w-fit" />
-        <h1 className="text-3xl font-bold text-red-600">
-          Support Meaningful Projects with Crypto
-        </h1>
+        <img src={banner} className=" h-[300px] w-fit object-contain" />
+        <h1 className="text-3xl font-bold text-red-600">Support Meaningful Projects with Crypto</h1>
         <p className="text-gray-600 mt-2 max-w-lg">
-          Your allocated fund will be pooled and distributed to impactful
-          programs.
+          Your allocated fund will be pooled and distributed to impactful programs.
         </p>
         <div>
           <button
@@ -170,40 +212,37 @@ const Home: React.FC = () => {
           </button>
         </div>
       </main>
-      <section
-        className="flex flex-wrap justify-center gap-6 p-6 bg-white shadow-md"
-        style={{ minHeight: "200px" }}
-      >
-        <StatCard title="Managed Fund Amount" value="12.5 IDRX" />
-        <StatCard title="Programs Funded" value={`${programs.length}` || "0"} />
+      <section className="flex flex-wrap justify-center gap-6 p-6 bg-white shadow-md" style={{ minHeight: "200px" }}>
+        <StatCard title="Managed Fund Amount" value={`${Number(formattedManagedFundAmount).toLocaleString()} IDRX`} />
+        <StatCard title="Programs Funded" value={`${allPrograms?.length ?? 0}`} />
       </section>
 
       {/* Featured Organizations */}
       <section className="text-center py-12">
         <h2 className="text-2xl text-red-500 font-bold">Featured Programs</h2>
 
-        {programs.length === 0 ? (
-          <p className="mt-6 text-gray-500">
-            No programs available at the moment.
-          </p>
+        {(allPrograms?.length ?? 0) === 0 ? (
+          <p className="mt-6 text-gray-500">No programs available at the moment.</p>
         ) : (
           <div className="flex justify-center gap-6 mt-6 flex-wrap">
-            {programs.map((program: any, index) => (
-              <ProgramCard
-                key={index}
-                {...program}
-                onClick={() => handleOpenModal(program)}
-              />
-            ))}
+            {allPrograms?.map((_program, index) => {
+              const program: Program = {
+                id: Number(_program.id),
+                name: _program.name,
+                description: _program.desc,
+                addressPIC: _program.pic,
+                fundRaised: Number(_program.allocated),
+                fundTarget: Number(_program.target),
+                transactions: [],
+              };
+
+              return <ProgramCard key={index} {...program} onClick={() => handleOpenModal(program)} />;
+            })}
           </div>
         )}
       </section>
 
-      <DonationModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        selectedProgram={selectedProgram}
-      />
+      <DonationModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} selectedProgram={selectedProgram} />
 
       <ContributeModal
         isOpen={isContributeModalOpen}

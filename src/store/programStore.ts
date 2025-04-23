@@ -8,6 +8,7 @@ interface Transaction {
 }
 
 export interface Program {
+  id: number;
   name: string;
   description: string;
   addressPIC: string;
@@ -26,7 +27,17 @@ interface ProgramStore {
 export const useProgramStore = create<ProgramStore>()(
   persist(
     (set) => ({
-      programs: [],
+      programs: [
+        {
+          id: 1,
+          addressPIC: "0x1234567890123456789012345678901234567890",
+          description: "Test",
+          fundRaised: 0,
+          fundTarget: 1000,
+          name: "Test",
+          transactions: [],
+        },
+      ],
       addProgram: (program) =>
         set((state) => ({
           programs: [...state.programs, program],

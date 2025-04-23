@@ -1,14 +1,35 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import ProgramCard from "../components/ProgramCard";
-import { useProgramStore } from "../store/programStore";
+import { Program } from "../store/programStore";
+import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import { DANANTIRI_ADDRESS } from "../constants";
+import { danantiriABI } from "../utils/abi";
+import { Address, isAddress, isAddressEqual, parseUnits } from "viem";
+import { liskSepolia } from "viem/chains";
+import { waitForTransactionReceipt } from "wagmi/actions";
+import { config } from "../provider";
 
 const AdminPage: React.FC = () => {
-  const checkAdmin = () => {
-    // login to validate admin
-  };
-  const { programs, addProgram, updateFund } = useProgramStore();
+  const { address } = useAccount();
+
+  const { data: admin } = useReadContract({
+    abi: danantiriABI,
+    address: DANANTIRI_ADDRESS,
+    functionName: "owner",
+  });
+
+  // Mengambil semua program
+  const { data: allPrograms } = useReadContract({
+    abi: danantiriABI,
+    address: DANANTIRI_ADDRESS,
+    functionName: "getAllProgram",
+  });
+
+  const { writeContractAsync } = useWriteContract();
+
+  const isAdmin = address && admin && isAddressEqual(address, admin);
 
   const [newProgram, setNewProgram] = useState({
     name: "",
@@ -21,24 +42,30 @@ const AdminPage: React.FC = () => {
   const [selectedProgram, setSelectedProgram] = useState<any>(null);
   const [allocationAmount, setAllocationAmount] = useState("");
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setNewProgram((prev) => ({ ...prev, [name]: value }));
   };
 
-  const addProgramHandler = () => {
+  const addProgramHandler = async () => {
     // add program to smartcontract
     if (newProgram.name && newProgram.description && newProgram.budget) {
-      addProgram({
-        name: newProgram.name,
-        description: newProgram.description,
-        addressPIC: newProgram.addressPIC,
-        fundRaised: 0,
-        fundTarget: parseInt(newProgram.budget),
-        transactions: [],
+      if (!isAddress(newProgram.addressPIC)) {
+        alert("Invalid PIC address");
+        return;
+      }
+      const parsedBudget = parseUnits(newProgram.budget, 2);
+      const hash = await writeContractAsync({
+        abi: danantiriABI,
+        address: DANANTIRI_ADDRESS,
+        functionName: "createProgram",
+        args: [newProgram.name, parsedBudget, newProgram.description, newProgram.addressPIC as Address],
       });
+      await waitForTransactionReceipt(config, {
+        hash,
+        chainId: liskSepolia.id,
+      });
+      alert("Program created successfully");
       setNewProgram({
         name: "",
         description: "",
@@ -54,43 +81,60 @@ const AdminPage: React.FC = () => {
     setIsModalOpen(true);
   };
 
-  const allocateFund = () => {
+  const allocateFund = async () => {
     // insert logic to allocationFund to smart contract
     if (!selectedProgram || !allocationAmount) return;
 
-    updateFund(
-      selectedProgram.name,
-      parseInt(allocationAmount),
-      "Admin allocation"
-    );
+    // updateFund(selectedProgram.name, parseInt(llocationAmount), "Admin allocation");
+
+    const hash = await writeContractAsync({
+      abi: danantiriABI,
+      address: DANANTIRI_ADDRESS,
+      functionName: "allocateFund",
+      args: [BigInt(selectedProgram.id)],
+    });
+
+    await waitForTransactionReceipt(config, {
+      hash,
+      chainId: liskSepolia.id,
+    });
+    alert("Fund allocated successfully");
 
     setIsModalOpen(false);
   };
 
-  const whitdrawFund = () => {
+  const whitdrawFund = async () => {
     // insert logic to whitdraw fund from smart contract
     if (!selectedProgram || !allocationAmount) return;
 
-    updateFund(
-      selectedProgram.name,
-      parseInt(allocationAmount),
-      "Admin allocation"
-    );
+    // updateFund(selectedProgram.name, parseInt(allocationAmount), "Admin allocation");
+
+    const parsedAmount = parseUnits(allocationAmount, 2);
+
+    const hash = await writeContractAsync({
+      abi: danantiriABI,
+      address: DANANTIRI_ADDRESS,
+      functionName: "withdrawFund",
+      args: [BigInt(selectedProgram.id), "Admin Withdraw", parsedAmount],
+    });
+
+    await waitForTransactionReceipt(config, {
+      hash,
+      chainId: liskSepolia.id,
+    });
 
     setIsModalOpen(false);
   };
 
-  useEffect(() => {
-    checkAdmin();
-  }, []);
+  if (!isAdmin) {
+    return <div>You are not authorized to access this page</div>;
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-gray-100">
       <Navbar />
       <main className="flex-grow p-6">
-        <h1 className="text-2xl text-red-500 font-bold text-center">
-          Admin Panel - Fund Programs Management
-        </h1>
+        <h1 className="text-2xl text-red-500 font-bold text-center">Admin Panel - Fund Programs Management</h1>
 
         {/* Form untuk Menambahkan Program */}
         <div className="bg-white p-6 shadow-md rounded-lg mt-6 max-w-lg mx-auto">
@@ -138,19 +182,23 @@ const AdminPage: React.FC = () => {
         <section className="text-center py-12">
           <h2 className="text-2xl text-red-500 font-bold">Current Programs</h2>
 
-          {programs.length === 0 ? (
-            <p className="mt-6 text-gray-500">
-              No programs available at the moment.
-            </p>
+          {(allPrograms?.length ?? 0) === 0 ? (
+            <p className="mt-6 text-gray-500">No programs available at the moment.</p>
           ) : (
             <div className="flex justify-center gap-6 mt-6 flex-wrap">
-              {programs.map((program: any, index) => (
-                <ProgramCard
-                  key={index}
-                  {...program}
-                  onClick={() => openAllocateModal(program)}
-                />
-              ))}
+              {allPrograms?.map((_program, index) => {
+                const program: Program = {
+                  id: Number(_program.id),
+                  name: _program.name,
+                  description: _program.desc,
+                  addressPIC: _program.pic,
+                  fundRaised: Number(_program.allocated),
+                  fundTarget: Number(_program.target),
+                  transactions: [],
+                };
+
+                return <ProgramCard key={index} {...program} onClick={() => openAllocateModal(program)} />;
+              })}
             </div>
           )}
         </section>
@@ -168,18 +216,11 @@ const AdminPage: React.FC = () => {
               ✖
             </button>
 
-            <h2 className="text-2xl font-bold text-center">
-              {selectedProgram.name}
-            </h2>
-            <p className="text-gray-300 mt-2 text-center">
-              {selectedProgram.description}
-            </p>
+            <h2 className="text-2xl font-bold text-center">{selectedProgram.name}</h2>
+            <p className="text-gray-300 mt-2 text-center">{selectedProgram.description}</p>
 
             <div className="mt-4 text-sm text-center text-gray-400">
-              PIC Address:{" "}
-              <span className="text-gray-200">
-                {selectedProgram.addressPIC}
-              </span>
+              PIC Address: <span className="text-gray-200">{selectedProgram.addressPIC}</span>
             </div>
 
             <div>
@@ -198,17 +239,12 @@ const AdminPage: React.FC = () => {
                 <div
                   className="bg-red-500 h-6 rounded-full text-center text-xs font-bold text-black flex items-center justify-center"
                   style={{
-                    width: `${
-                      (selectedProgram.fundRaised /
-                        selectedProgram.fundTarget) *
-                      100
-                    }%`,
+                    width: `${(selectedProgram.fundRaised / selectedProgram.fundTarget) * 100}%`,
                   }}
                 ></div>
               </div>
               <p className="text-gray-400 text-xs mt-2 text-center">
-                {selectedProgram.fundRaised.toLocaleString()} IDRX /{" "}
-                {selectedProgram.fundTarget.toLocaleString()} IDRX
+                {selectedProgram.fundRaised.toLocaleString()} IDRX / {selectedProgram.fundTarget.toLocaleString()} IDRX
               </p>
             </div>
 
@@ -249,27 +285,18 @@ const AdminPage: React.FC = () => {
                     </thead>
                     {selectedProgram.transactions ? (
                       <tbody>
-                        {selectedProgram.transactions.map(
-                          (tx: any, idx: number) => (
-                            <tr key={idx}>
-                              <td className="border px-4 py-2">{tx.amount}</td>
-                              <td className="border px-4 py-2">
-                                {tx?.date || ""}
-                              </td>
-                              <td className="border px-4 py-2">
-                                {tx?.note || ""}
-                              </td>
-                            </tr>
-                          )
-                        )}
+                        {selectedProgram.transactions.map((tx: any, idx: number) => (
+                          <tr key={idx}>
+                            <td className="border px-4 py-2">{tx.amount}</td>
+                            <td className="border px-4 py-2">{tx?.date || ""}</td>
+                            <td className="border px-4 py-2">{tx?.note || ""}</td>
+                          </tr>
+                        ))}
                       </tbody>
                     ) : (
                       <tbody>
                         <tr>
-                          <td
-                            className="border text-center px-4 py-2"
-                            colSpan={3}
-                          >
+                          <td className="border text-center px-4 py-2" colSpan={3}>
                             No transactions available
                           </td>
                         </tr>
