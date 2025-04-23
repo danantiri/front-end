@@ -31,10 +31,10 @@ const DonationModal: React.FC<{
 
   if (!isOpen || !selectedProgram) return null;
 
-  const fundRaised = formatUnits(BigInt(selectedProgram.fundRaised), 2);
-  const fundTarget = formatUnits(BigInt(selectedProgram.fundTarget), 2);
+  const fundRaised = selectedProgram.fundRaised;
+  const fundTarget = selectedProgram.fundTarget;
 
-  const progressPercentage = Math.min((Number(fundRaised) / Number(fundTarget)) * 100, 100).toFixed(0);
+  const progressPercentage = Math.min((fundRaised / fundTarget) * 100, 100).toFixed(0);
 
   return (
     <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-60">
@@ -231,8 +231,8 @@ const Home: React.FC = () => {
                 name: _program.name,
                 description: _program.desc,
                 addressPIC: _program.pic,
-                fundRaised: Number(_program.allocated),
-                fundTarget: Number(_program.target),
+                fundRaised: Number(formatUnits(_program.allocated, 2)),
+                fundTarget: Number(formatUnits(_program.target, 2)),
                 transactions: [],
               };
 

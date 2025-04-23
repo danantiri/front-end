@@ -6,7 +6,7 @@ import { Program } from "../store/programStore";
 import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import { DANANTIRI_ADDRESS } from "../constants";
 import { danantiriABI } from "../utils/abi";
-import { Address, isAddress, isAddressEqual, parseUnits } from "viem";
+import { Address, formatUnits, isAddress, isAddressEqual, parseUnits } from "viem";
 import { liskSepolia } from "viem/chains";
 import { waitForTransactionReceipt } from "wagmi/actions";
 import { config } from "../provider";
@@ -192,8 +192,8 @@ const AdminPage: React.FC = () => {
                   name: _program.name,
                   description: _program.desc,
                   addressPIC: _program.pic,
-                  fundRaised: Number(_program.allocated),
-                  fundTarget: Number(_program.target),
+                  fundRaised: Number(formatUnits(_program.allocated, 2)),
+                  fundTarget: Number(formatUnits(_program.target, 2)),
                   transactions: [],
                 };
 
