@@ -8,7 +8,7 @@ import ContributeModal from "../components/ContributeModal";
 import { Program } from "../store/programStore";
 import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import { danantiriABI } from "../utils/abi";
-import { Address, erc20Abi, formatUnits, parseUnits } from "viem";
+import { erc20Abi, formatUnits, parseUnits } from "viem";
 import { DANANTIRI_ADDRESS, IDRX_SEPOLIA } from "../constants";
 import { waitForTransactionReceipt } from "wagmi/actions";
 import { config } from "../provider";
@@ -116,24 +116,6 @@ const Home: React.FC = () => {
   const [isContributeModalOpen, setIsContributeModalOpen] = useState(false);
 
   const { address } = useAccount();
-
-  const { data: allowance } = useReadContract({
-    abi: erc20Abi,
-    address: IDRX_SEPOLIA,
-    functionName: "allowance",
-    args: [address as Address, DANANTIRI_ADDRESS],
-  });
-
-  console.log({ allowance });
-
-  const { data: idrxToken } = useReadContract({
-    abi: danantiriABI,
-    address: DANANTIRI_ADDRESS,
-    functionName: "idrxToken",
-    args: [],
-  });
-
-  console.log({ idrxToken });
 
   // Mengambil semua program
   const { data: allPrograms } = useReadContract({
